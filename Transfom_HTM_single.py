@@ -1,26 +1,28 @@
 import re
 import pyperclip
 
+# Converts lowercase 'b' notation (e.g. Lb) to HTM standard (e.g. L')
 def convert_to_htm(notation):
-    """Ersetzt 'b' durch ', z. B. Lb → L'"""
     return notation.replace('b', "'")
 
+# Simplifies sequences by combining repeated moves into HTM-style notation
 def simplify_moves(moves):
     simplified = []
     i = 0
     changes_log = []
-    
+
     while i < len(moves):
         current = moves[i]
         count = 1
+        # Count how many times the same move appears consecutively
         while i + count < len(moves) and moves[i + count] == current:
             count += 1
 
         original_group = " ".join([current] * count)
 
+        # Reduction rules
         if count >= 4:
             remainder = count % 4
-            group = [current] * remainder
             reduced = ""
             if remainder == 1:
                 reduced = current
@@ -29,20 +31,14 @@ def simplify_moves(moves):
                 reduced = current[0] + '2'
                 simplified.append(reduced)
             elif remainder == 3:
-                if "'" in current:
-                    reduced = current[0]
-                else:
-                    reduced = current[0] + "'"
+                reduced = current[0] if "'" in current else current[0] + "'"
                 simplified.append(reduced)
             if remainder:
-                changes_log.append(f"{original_group} → {reduced} (nach 4er-Reduktion)")
+                changes_log.append(f"{original_group} → {reduced} (after 4-move reduction)")
             else:
-                changes_log.append(f"{original_group} → gelöscht")
+                changes_log.append(f"{original_group} → deleted")
         elif count == 3:
-            if "'" in current:
-                reduced = current[0]
-            else:
-                reduced = current[0] + "'"
+            reduced = current[0] if "'" in current else current[0] + "'"
             simplified.append(reduced)
             changes_log.append(f"{original_group} → {reduced}")
         elif count == 2:
@@ -56,24 +52,31 @@ def simplify_moves(moves):
     return simplified, changes_log
 
 def main():
-    print("🔄 Lese Zugfolge aus Zwischenablage …")
+    print("🔄 Reading move sequence from clipboard …")
     raw_input = pyperclip.paste().strip()
     raw_moves = raw_input.split()
+
+    # Convert all moves to HTM format
     converted_moves = [convert_to_htm(move) for move in raw_moves]
 
+    # Apply simplification rules
     simplified_moves, logs = simplify_moves(converted_moves)
 
-    print("\n📥 Ursprüngliche Zugfolge (HTM konvertiert):")
+    # Display original converted sequence
+    print("\n📥 Original sequence (HTM converted):")
     print(" ".join(converted_moves))
 
-    print("\n📋 Ersetzungen:")
+    # Display all reductions and transformations
+    print("\n📋 Applied transformations:")
     for log in logs:
         print(" -", log)
 
-    print(f"\n🔢 Anzahl Züge vorher: {len(converted_moves)}")
-    print(f"🔢 Anzahl Züge nachher: {len(simplified_moves)}")
+    # Statistics
+    print(f"\n🔢 Number of moves before: {len(converted_moves)}")
+    print(f"🔢 Number of moves after: {len(simplified_moves)}")
 
-    print("\n✅ Ergebnis-Zugfolge:")
+    # Final output
+    print("\n✅ Final transformed sequence:")
     print(" ".join(simplified_moves))
 
 if __name__ == "__main__":
